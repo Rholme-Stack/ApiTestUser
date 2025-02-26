@@ -1,6 +1,7 @@
 ﻿using ApiTestUser.Data;
 using ApiTestUser.DTOs;
 using ApiTestUser.Models;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -40,8 +41,9 @@ namespace ApiTestUser.Services
         {
             var UsuarioDTO = new UsuarioDTO();
             var UsuarioDB = await _context.Usuarios.Include(c => c.CategoriaReferencia)
-                .Where(u => u.idUsuario == id).FirstAsync();
+                .Where(u => u.idUsuario == id).FirstOrDefaultAsync();
 
+            if (UsuarioDB is null) return null;
 
             UsuarioDTO.idUsuario = id;
             UsuarioDTO.nombre = UsuarioDB.nombre;
@@ -81,6 +83,46 @@ namespace ApiTestUser.Services
                 FechaNasc = usuarioDB.FechaNasc,
                 idCategoria = usuarioDB.idCategoria
             };
+        }
+
+        public async Task<ActionResult<UsuarioDTO>> EditUser(UsuarioDTO usuarioDto)
+        {
+            var UsuarioDB = await _context.Usuarios
+               .Where(u => u.idUsuario == usuarioDto.idUsuario).FirstAsync();
+          
+            UsuarioDB.nombre = usuarioDto.nombre;
+            UsuarioDB.apellido = usuarioDto.apellido;
+            UsuarioDB.email = usuarioDto.email;
+            UsuarioDB.FechaNasc = usuarioDto.FechaNasc;
+            UsuarioDB.idCategoria = usuarioDto.idCategoria;
+
+            _context.Usuarios.Update(UsuarioDB);
+            await _context.SaveChangesAsync();
+
+            return new UsuarioDTO
+            {
+                idUsuario = UsuarioDB.idUsuario,
+                nombre = UsuarioDB.nombre,
+                apellido = UsuarioDB.apellido,
+                email = UsuarioDB.email,
+                FechaNasc = UsuarioDB.FechaNasc,
+                idCategoria = UsuarioDB.idCategoria
+            };
+        }
+
+        public async Task<Boolean> DeleteUser(int id)
+        {
+            var UsuarioDB = await _context.Usuarios.FindAsync(id);
+
+            if (UsuarioDB is null)
+            {
+                return false;
+            }
+
+            _context.Usuarios.Remove(UsuarioDB);
+            await _context.SaveChangesAsync();
+
+            return true;
         }
 
 

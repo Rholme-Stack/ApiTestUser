@@ -29,18 +29,24 @@ namespace ApiTestUser.Controllers
         [HttpGet]
         [Route("User/{id}")]
         public async Task<ActionResult<UsuarioDTO>> GetUser(int id)
-        {
-                        
-            return Ok(await _usuarioService.GetUser(id));
+        {    
+            var result = await _usuarioService.GetUser(id);
+
+            if (result is null)
+            {
+                return BadRequest("El usuario no existe en DB.");
+            }
+
+            return result;
         }
 
         [HttpPost]
         [Route("Save")]
         public async Task<ActionResult<UsuarioDTO>> SaveUser(UsuarioDTO usuarioDTO)
         {
-            var ansewr = await _usuarioService.SaveUser(usuarioDTO);
+            var result = await _usuarioService.SaveUser(usuarioDTO);
 
-            if (ansewr is null)
+            if (result is null)
             {
                 return BadRequest("Error al guardar el usuario.");
             }
@@ -52,38 +58,28 @@ namespace ApiTestUser.Controllers
         [Route("editar")]
         public async Task<ActionResult<UsuarioDTO>> EditUser(UsuarioDTO usuarioDto)
         {
-            var UsuarioDB = await _context.Usuarios
-               .Where(u => u.idUsuario == usuarioDto.idUsuario).FirstAsync();
+            var result = await _usuarioService.EditUser(usuarioDto);
 
-            UsuarioDB.nombre = usuarioDto.nombre;
-            UsuarioDB.apellido = usuarioDto.apellido;
-            UsuarioDB.email = usuarioDto.email;
-            UsuarioDB.FechaNasc = usuarioDto.FechaNasc;
-            UsuarioDB.idCategoria = usuarioDto.idCategoria;
+            if (result is null)
+            {
+                return BadRequest("Error al guardar el usuario.");
+            }
 
-            _context.Usuarios.Update(UsuarioDB);
-            await _context.SaveChangesAsync();
-
-            return Ok("Registro updated.");
+            return Ok("El usuario ha sido modificado.");
         }
 
         [HttpDelete]
         [Route("delete{id}")]
         public async Task<ActionResult<UsuarioDTO>> DeleteUser(int id)
         {
-            var UsuarioDB = await _context.Usuarios.FindAsync(id);
-               
+            var result = await _usuarioService.DeleteUser(id);
 
-            
-            if( UsuarioDB is null){
-                return NotFound("Usuario no encontrado.");
+            if (result is false)
+            {
+                return BadRequest("No se ha encontrado este usuario.");
             }
 
-            _context.Usuarios.Remove(UsuarioDB);
-            await _context.SaveChangesAsync();
-
-            return Ok("Registro Eliminado.");
-
+            return Ok("El usuario ha sido eliminado.");
 
         }
 
